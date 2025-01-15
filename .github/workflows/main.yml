@@ -1,0 +1,42 @@
+name: Build
+on:
+  push:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@main
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Fetch AuroraStore repo
+      run: |
+        git clone https://gitlab.com/AuroraOSS/AuroraStore.git -b master --recurse-submodules
+
+    - name: Set up JDK 22
+      uses: actions/setup-java@main
+      with:
+        java-version: 22
+        distribution: temurin
+
+    - name: Setup latest Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: "current"
+
+    - name: Build with Gradle
+      run: |
+        cd AuroraStore
+        gradle assembleNightly
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@main
+      with:
+        name: AuroraStore
+        path: app/build/outputs/apk/nightly/*.apk
