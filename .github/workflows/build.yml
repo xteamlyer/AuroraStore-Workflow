@@ -1,0 +1,67 @@
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Specify the branch to clone (e.g., master or dev)'
+        required: false
+        default: 'dev'
+
+jobs:
+  build:
+    name: Build-${{ matrix.build-type }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build-type: [nightly, nightlz]
+
+    steps:
+    - uses: actions/checkout@main
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Fetch AuroraStore repo
+      run: |
+        git clone https://gitlab.com/AuroraOSS/AuroraStore.git -b ${{ github.event.inputs.branch || 'master' }} --recurse-submodules
+
+    - name: Set up JDK 22
+      uses: actions/setup-java@main
+      with:
+        java-version: 22
+        distribution: temurin
+
+    - name: Setup latest Gradle
+      uses: gradle/actions/setup-gradle@main
+      with:
+        gradle-version: "current"
+
+    - name: Modify build.gradle.kts
+      run: |
+        cd AuroraStore/app
+        sed -i '/register("nightly") {/,/}/c\
+        register("nightly") {\n\
+            initWith(getByName("release"))\n\
+            applicationIdSuffix = ".${{ matrix.build-type }}"\n\
+            signingConfig = signingConfigs.getByName("aosp")\n\
+            isDebuggable = false\n\
+            isProfileable = true\n\
+        }' build.gradle.kts
+
+    - name: Modify strings.xml for nightlz
+      if: matrix.build-type == 'nightlz'
+      run: |
+        cd AuroraStore/app/src/main/res/values
+        sed -i 's|<string name="app_name" translatable="false">"Aurora Store"</string>|<string name="app_name" translatable="false">"Aurora Store Nightlz"</string>|' strings.xml
+
+    - name: Build with Gradle
+      run: |
+        cd AuroraStore
+        gradle assembleNightly
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@main
+      with:
+        name: AuroraStore-${{ matrix.build-type }}
+        path: AuroraStore/app/build/outputs/apk/nightly/*.apk
