@@ -32,11 +32,6 @@ jobs:
         java-version: 22
         distribution: temurin
 
-    - name: Setup latest Gradle
-      uses: gradle/actions/setup-gradle@main
-      with:
-        gradle-version: '8.13'
-
     - name: Modify build.gradle.kts
       run: |
         cd AuroraStore/app
@@ -44,6 +39,7 @@ jobs:
         register("nightly") {\n\
             initWith(getByName("release"))\n\
             applicationIdSuffix = ".${{ matrix.build-type }}"\n\
+            versionNameSuffix = "-${lastCommitHash.get()}"\n\
             signingConfig = signingConfigs.getByName("aosp")\n\
             isDebuggable = false\n\
             isProfileable = true\n\
@@ -58,7 +54,8 @@ jobs:
     - name: Build with Gradle
       run: |
         cd AuroraStore
-        gradle assembleNightly
+        chmod +x ./gradlew
+        ./gradlew assembleNightly
 
     - name: Upload Build Artifact
       uses: actions/upload-artifact@main
