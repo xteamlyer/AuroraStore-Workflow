@@ -35,7 +35,7 @@ jobs:
     - name: Setup latest Gradle
       uses: gradle/actions/setup-gradle@main
       with:
-        gradle-version: "current"
+        gradle-version: '8.13'
 
     - name: Modify build.gradle.kts
       run: |
