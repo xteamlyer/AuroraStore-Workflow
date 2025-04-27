@@ -32,19 +32,6 @@ jobs:
         java-version: 22
         distribution: temurin
 
-    - name: Modify build.gradle.kts
-      run: |
-        cd AuroraStore/app
-        sed -i '/register("nightly") {/,/}/c\
-        register("nightly") {\n\
-            initWith(getByName("release"))\n\
-            applicationIdSuffix = ".${{ matrix.build-type }}"\n\
-            versionNameSuffix = "-${lastCommitHash.get()}"\n\
-            signingConfig = signingConfigs.getByName("aosp")\n\
-            isDebuggable = false\n\
-            isProfileable = true\n\
-        }' build.gradle.kts
-
     - name: Modify strings.xml for nightlz
       if: matrix.build-type == 'nightlz'
       run: |
