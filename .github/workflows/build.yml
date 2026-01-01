@@ -37,11 +37,6 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@main
 
-    - name: Patch settings.gradle.kts for Huawei
-      if: ${{ inputs.huawei }}
-      run: |
-        sed -i 's/includeModule("com.huawei.hms", "ag-coreservice")/includeGroup("com.huawei.hms")\n            includeGroup("com.huawei.android.hms")/' settings.gradle.kts
-
     - name: Patch build.gradle.kts for Nightlz & signing
       run: |
         if [[ "${{ matrix.build-type }}" == "nightlz" ]]; then
